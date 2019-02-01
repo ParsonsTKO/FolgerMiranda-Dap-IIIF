@@ -1,0 +1,12 @@
+# Ignore everything
+**
+
+# Allow app files
+!/etc/docker/app/cantaloupe.toml
+!/cantaloupe.properties
+
+# Ignore unnecessary files
+**/*~
+**/*.log
+**/.DS_Store
+**/Thumbs.db

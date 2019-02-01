@@ -1,0 +1,58 @@
+version: '3.6'
+
+services:
+  app:
+    container_name: folgerdap-iiif-app
+    hostname: app
+    build:
+      context: .
+      dockerfile: etc/docker/app/Dockerfile
+    image: folgerdap/iiif/app
+    ports:
+      - "${APP_PORT:-8182}:8182"
+    volumes:
+      - ./repository/images:/repository
+      - ./cantaloupe.properties:/etc/confd/templates/cantaloupe.properties
+    environment:
+      SOURCE_STATIC: ${SOURCE_STATIC:-S3Source}
+      S3SOURCE_ENDPOINT: ${S3SOURCE_ENDPOINT:-http://storage:9000}    
+      S3SOURCE_ACCESS_KEY: ${S3SOURCE_ACCESS_KEY:-STORAGENOTACCESSKEY}
+      S3SOURCE_SECRET_KEY: ${S3SOURCE_SECRET_KEY:-STORAGENOTSECRETKEY}
+      S3SOURCE_BUCKET: ${S3SOURCE_BUCKET:-images}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      ERROR_STACK_TRACE: ${ERROR_STACK_TRACE:-true}
+    working_dir: /app
+    networks:
+      public:
+          aliases:
+            - iiif
+      storage:      
+    restart: always
+    depends_on:
+      - storage    
+  storage:
+    container_name: folgerdap-iiif-storage
+    hostname: storage
+    image: minio/minio
+    ports:
+      - "${STORAGE_CLIENT_PORT:-9000}:9000"
+    volumes:
+      - ./repository:/storage
+    environment:      
+      MINIO_ACCESS_KEY: STORAGENOTACCESSKEY
+      MINIO_SECRET_KEY: STORAGENOTSECRETKEY
+      MINIO_HTTP_TRACE: /dev/stdout
+    working_dir: /storage
+    command: server /storage
+    healthcheck:
+      disable: true
+    networks:
+      - storage
+    restart: always                 
+
+networks:
+  public:
+    name: folgerdap-iiif-public 
+  storage:
+    name: folgerdap-iiif-storage     
